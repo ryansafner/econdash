@@ -1,0 +1,301 @@
+---
+title: "Key U.S. Economic Indicators"
+output: 
+  flexdashboard::flex_dashboard:
+    orientation: columns
+    vertical_layout: fill
+    source_code: embed
+---
+
+<!-- add "next data release date" for each!--> 
+<!-- Organize by category...employment, prices, growth -->
+
+<!--
+
+- interest rates
+- treasury yields
+- treasury spread
+- TIPS
+- forecasted inflation
+- yield curve
+
+## Asset Prices
+
+- stocks (S&P 500)
+- home prices 
+- rental prices
+-->
+
+
+```{r setup, include=FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(fredr)
+library(fontawesome)
+library(dygraphs)
+library(extrafont)
+
+fredr_set_key("9100cdf3c862283007d8c83ce02059e6")
+
+recessions <-fredr(
+    series_id = "JHDUSRGDPBR"
+)
+
+recessions_start_end <- recessions %>% # from https://datavizm20.classes.andrewheiss.com/example/11-example/
+    mutate(recession_change = value - lag(value)) %>% 
+    filter(recession_change != 0)
+
+recs <- tibble(start = filter(recessions_start_end, recession_change == 1)$date,
+               end = filter(recessions_start_end, recession_change == -1)$date)
+
+```
+
+```{r import values}
+
+# Federal Funds Rate
+
+ffr <- fredr(
+  series_id = "FEDFUNDS"
+)
+
+#  US Regular All Formulations Gas Price
+gas <- fredr(
+  series_id = "GASREGW"
+)
+
+#  University of Michigan: Consumer Sentiment
+## 1966Q1 = 100 Index
+
+conssent <- fredr(
+  series_id = "UMCSENT"
+)
+
+#  Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma; Dollars per Barrel
+oil <- fredr(
+  series_id = "DCOILWTICO"
+)
+
+# Percent, Not Seasonally Adjusted;  Weekly, Ending Thursday 
+mortgage <- fredr(
+  series_id = "MORTGAGE30US"
+)
+
+# Consumer Price Index for All Urban Consumers: All Items in U.S. City Average 
+# Index 1982-1984=100, Seasonally Adjusted 
+# pc1 = percent change from 1 year ago, see https://cran.r-project.org/web/packages/fredr/fredr.pdf
+cpi <- fredr(
+  series_id = "CPIAUCSL", units = "pc1"
+)
+```
+
+```{r get-latest-value-and-date-functions}
+get_latest_value = function(input){
+  input %>%
+    arrange(desc(date)) %>%
+    slice(1) %>%
+    pull(value)
+}
+
+get_latest_date = function(input){
+  input %>%
+    arrange(desc(date)) %>%
+    slice(1) %>%
+    pull(date) -> temp
+    paste(lubridate::month(temp, label = TRUE),
+            lubridate::day(temp),
+            lubridate::year(temp))
+}
+```
+
+```{r}
+# Fed Funds Rate
+ffr_latest <- paste0(get_latest_value(ffr),"%")
+ffr_latest_date <- get_latest_date(ffr)
+
+# Gas Price
+gas_latest <- paste0("$", round(get_latest_value(gas), 2), "/gallon")
+gas_latest_date <- get_latest_date(gas)
+
+# Oil Price
+oil_latest <- paste0("$", round(get_latest_value(oil), 2), "/barrel")
+oil_latest_date <- get_latest_date(oil)
+
+# Fed Funds Rate
+cpi_latest <- paste0(get_latest_value(cpi),"%")
+cpi_latest_date <- get_latest_date(cpi)
+
+```
+
+```{r, eval=F}
+ffr_current <- ffr %>%
+  arrange(desc(date)) %>%
+  slice(1) %>%
+  pull(value) %>%
+  paste0(., "%")
+
+ffr_current_date <- ffr %>%
+  arrange(desc(date)) %>%
+  slice(1) %>%
+  pull(date)
+```
+
+Indicators at a Glance
+===============
+
+Row
+---------------
+
+### Federal Funds Rate (as of `r ffr_latest_date`) {.value-box}
+
+```{r}
+valueBox(value = ffr_latest, icon = "fa-percent")
+```
+
+### Gas Price (as of `r gas_latest_date`) {.value-box}
+
+```{r}
+valueBox(value = gas_latest, icon = "fa-gas-pump")
+```
+
+### Oil Price (as of `r oil_latest_date`) {.value-box}
+
+```{r}
+valueBox(value = oil_latest, icon = "fa-oil-well")
+```
+
+### Consumer Price Index — Percent Change from 1 Year Ago (as of `r cpi_latest_date`) {.value-box}
+
+```{r}
+valueBox(value = cpi_latest, icon = "fa-solid fa-money-bill-trend-up")
+```
+
+Key Prices
+=======================================================================
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Federal Funds Rate
+
+```{r}
+plot_ffr <-ggplot(data = ffr)+
+    aes(x = date,
+        y = value,
+        color = series_id)+
+    geom_rect(data = recs, 
+              aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "black", alpha = 0.3)+
+    geom_path(size=1)+
+    geom_hline(yintercept=0, size=1)+
+    scale_x_date(limits=as.Date(c("1955-01-01", "2022-07-01")),
+                 date_breaks = "5 years",
+                 #minor_breaks = "2 years",
+                 date_labels = "%Y",
+                 expand = c(0,0))+
+    scale_y_continuous(breaks=seq(0,20,2),
+                       labels=function(x){paste0(x,"%")},
+                       limits = c(0,20),
+                       expand = c(0,0))+
+    labs(x = "Year",
+         y = "Federal Funds Rate",
+         caption = "Data Source: FRED; Recessions Shaded in Gray")+
+    theme_classic(base_family = "Fira Sans Condensed", base_size = 16)+
+    theme(legend.position="none")
+
+plot_ffr # %>% plotly::ggplotly()
+```
+
+Column {data-width=350}
+-----------------------------------------------------------------------
+
+### Chart B
+
+```{r}
+library(xts)
+ffr %>% 
+  select(value) %>%
+  rename("Fed Funds Rate" = value) %>% 
+  xts(., order.by = as.Date(ffr$date)) %>% 
+  dygraph() %>%
+  dyRangeSelector()
+```
+
+### Chart C
+
+```{r}
+library(highcharter)
+hchart(ffr, "line", hcaes(x = date, y = value))
+  
+```
+
+Gasoline
+===============
+
+Column {data-width=650}
+-----------------------------------------------------------------------
+
+### Gasoline
+
+```{r}
+plot_gas <-ggplot(data = gas)+
+    aes(x = date,
+        y = value,
+        color = series_id)+
+    geom_rect(data = recs, 
+              aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "black", alpha = 0.3)+
+    geom_path(size=1)+
+    geom_hline(yintercept=0, size=1)+
+    scale_x_date(limits=as.Date(c("1990-01-01", gas_latest_date)),
+                 date_breaks = "2 years",
+                 minor_breaks = "2 years",
+                 date_labels = "%Y",
+                 expand = c(0,0))+
+    scale_y_continuous(breaks=seq(0,5.25,0.25),
+                       labels=scales::dollar_format(),
+                       limits = c(0,5.25),
+                       expand = c(0,0))+
+    labs(x = "Year",
+         y = "Price/gal",
+         subtitle = "US Regular All Formulations Gas Price",
+         caption = "Data Source: FRED; Recessions Shaded in Gray")+
+    ggthemes::theme_pander(base_family = "Fira Sans Condensed", base_size = 16)+
+    theme(legend.position="none")
+
+plot_gas #%>% plotly::ggplotly()
+```
+
+Column {data-width=650}
+-----------------
+
+### Oil
+
+```{r}
+plot_oil <- ggplot(data = oil)+
+    aes(x = date,
+        y = value,
+        color = series_id)+
+    geom_rect(data = recs, 
+              aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "black", alpha = 0.3)+
+    geom_path(size=1)+
+    geom_hline(yintercept=0, size=1)+
+    scale_x_date(limits=as.Date(c("1950-01-01", oil_latest_date)),
+                 date_breaks = "5 years",
+                 minor_breaks = "2 years",
+                 date_labels = "%Y",
+                 expand = c(0,0))+
+    scale_y_continuous(breaks=seq(0,150,20),
+                       labels=scales::dollar_format(),
+                       limits = c(0,150),
+                       expand = c(0,0))+
+    labs(x = "Year",
+         y = "Price/barrel",
+         subtitle = "Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma",
+         caption = "Data Source: FRED; Recessions Shaded in Gray")+
+    ggthemes::theme_pander(base_family = "Fira Sans Condensed", base_size = 16)+
+    theme(legend.position="none")
+
+plot_oil #%>% plotly::ggplotly()
+
+```
