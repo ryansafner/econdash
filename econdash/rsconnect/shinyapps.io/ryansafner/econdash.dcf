@@ -1,0 +1,13 @@
+name: econdash
+title: econdash
+username:
+account: ryansafner
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 8356766
+bundleId: 6864046
+url: https://ryansafner.shinyapps.io/econdash/
+when: 1676843290.71422
+lastSyncTime: 1676843290.71429
+asMultiple: FALSE
+asStatic: FALSE
