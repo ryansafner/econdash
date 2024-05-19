@@ -92,7 +92,9 @@ plot_ffr <-ggplot(data = ffr)+
                        expand = c(0,0))+
     labs(x = "Year",
          y = "Federal Funds Rate",
-         caption = "Data Source: FRED; Recessions Shaded in Gray")+
+         caption = bquote("Data Source: FRED; Recessions Shaded in Gray; Latest Release: " ~ .(get_latest_date(ffr))
+                 )
+         )+
     theme_classic(base_family = "Fira Sans Condensed", base_size = 16)+
     theme(legend.position="none")
 
@@ -102,4 +104,23 @@ plot_ffr # %>% plotly::ggplotly()
 
 ```{r}
 plotly::ggplotly(plot_ffr)
+```
+
+## Dygraphs
+
+```{r}
+library(xts)
+ffr %>% 
+  select(value) %>%
+  rename("Fed Funds Rate" = value) %>% 
+  xts(., order.by = as.Date(ffr$date)) %>% 
+  dygraph() %>%
+  dyRangeSelector()
+```
+
+## Hicharter
+
+```{r}
+library(highcharter)
+hchart(ffr, "line", hcaes(x = date, y = value))
 ```

@@ -1,0 +1,389 @@
+---
+title: "graphs"
+format: html
+editor: visual
+---
+
+```{r setup, include = FALSE}
+library(flexdashboard)
+library(tidyverse)
+library(fredr)
+library(fontawesome)
+library(dygraphs)
+library(extrafont)
+
+fredr_set_key("9100cdf3c862283007d8c83ce02059e6")
+
+recessions <-fredr(
+    series_id = "JHDUSRGDPBR"
+)
+
+recessions_start_end <- recessions %>% # from https://datavizm20.classes.andrewheiss.com/example/11-example/
+    mutate(recession_change = value - lag(value)) %>% 
+    filter(recession_change != 0)
+
+recs <- tibble(start = filter(recessions_start_end, recession_change == 1)$date,
+               end = filter(recessions_start_end, recession_change == -1)$date)
+```
+
+```{r, import-values}
+
+# Federal Funds Rate
+
+ffr<-fredr(
+  series_id = "FEDFUNDS"
+)
+
+#  US Regular All Formulations Gas Price
+gas <- fredr(
+  series_id = "GASREGW"
+)
+
+#  University of Michigan: Consumer Sentiment
+## 1966Q1 = 100 Index
+
+conssent = fredr(
+  series_id = "UMCSENT"
+)
+
+#  Crude Oil Prices: West Texas Intermediate (WTI) - Cushing, Oklahoma; Dollars per Barrel
+oil = fredr(
+  series_id = "DCOILWTICO"
+)
+```
+
+```{r get-latest-value-and-date-functions}
+get_latest_value = function(input){
+  input %>%
+    arrange(desc(date)) %>%
+    slice(1) %>%
+    pull(value)
+}
+
+get_latest_date = function(input){
+  input %>%
+    arrange(desc(date)) %>%
+    slice(1) %>%
+    pull(date) -> temp
+    paste(lubridate::month(temp, label = TRUE),
+            lubridate::day(temp),
+            lubridate::year(temp))
+}
+```
+
+# Raw
+
+```{r}
+plot_ffr <-ggplot(data = ffr)+
+    aes(x = date,
+        y = value,
+        color = series_id)+
+    geom_rect(data = recs, 
+              aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "black", alpha = 0.3)+
+    geom_path(size=1)+
+    geom_hline(yintercept=0, size=1)+
+    scale_x_date(limits = c(as.Date("1955-01-01"),
+                            as.Date(lubridate::mdy(get_latest_date(ffr)))),
+                 date_breaks = "5 years",
+                 #minor_breaks = "2 years",
+                 date_labels = "%Y",
+                 expand = c(0,0))+
+    scale_y_continuous(breaks=seq(0,20,2),
+                       labels=function(x){paste0(x,"%")},
+                       limits = c(0,20),
+                       expand = c(0,0))+
+    labs(x = "Year",
+         y = "Federal Funds Rate",
+         caption = bquote("Data Source: FRED; Recessions Shaded in Gray; Latest Release: " ~ .(get_latest_date(ffr))
+                 )
+         )+
+    theme_classic(base_family = "Fira Sans Condensed", base_size = 16)+
+    theme(legend.position="none")
+
+plot_ffr # %>% plotly::ggplotly()
+
+```
+
+## Plotly
+
+```{r}
+plotly::ggplotly(plot_ffr,
+                 tooltip = c("date", "value")
+)
+```
+
+## Dygraphs
+
+```{r}
+library(xts)
+ffr %>% 
+  select(value) %>%
+  rename("Fed Funds Rate" = value) %>% 
+  xts(., order.by = as.Date(ffr$date)) %>% 
+  dygraph() %>%
+  dyRangeSelector()
+```
+
+```{r}
+dy_graph <- function(indicator, series_name, y_unit, shade_recessions){
+  if(y_unit == "percent"){
+    c <- indicator %>%
+      select(value) %>%
+      rename_with(~series_name, value) %>%
+      xts(., order.by = as.Date(indicator$date)) %>% 
+      dygraph() %>%
+      dyAxis("y", label = series_name,
+         valueFormatter = "function(v){return (v) + '%'}",
+         axisLabelFormatter = "function(v){return (v) + '%'}"
+         ) %>%
+  dyOptions(strokeWidth = 3) %>%
+  dyRangeSelector()
+  } else if(y_unit == "dollar"){
+    c <- indicator %>%
+      select(value) %>%
+      rename_with(~series_name, value) %>%
+      xts(., order.by = as.Date(indicator$date)) %>% 
+      dygraph() %>%
+      dyAxis("y", label = series_name,
+         valueFormatter = "function(v){return '$' + (v)}",
+         axisLabelFormatter = "function(v){return '$' + (v)}"
+         ) %>%
+      dyOptions(strokeWidth = 3) %>%
+      dyRangeSelector()
+  } else {
+    c <- indicator %>%
+      select(value) %>%
+      rename_with(~series_name, value) %>%
+      xts(., order.by = as.Date(indicator$date)) %>% 
+      dygraph() %>%
+      dyAxis("y", label = series_name) %>%
+      dyOptions(strokeWidth = 3) %>%
+      dyRangeSelector()
+  }
+  
+  # shade recessions?
+  
+  if(shade_recessions == TRUE){
+    return(c %>%
+               dyShading(from = "1969-04-01", to = "1971-01-01", color = "#e5e5e5") %>%
+  dyShading(from = "1973-10-01", to = "1975-04-01", color = "#e5e5e5") %>%
+  dyShading(from = "1979-04-01", to = "1980-07-01", color = "#e5e5e5") %>%
+  dyShading(from = "1981-04-01", to = "1982-07-01", color = "#e5e5e5") %>%
+  dyShading(from = "1989-10-01", to = "1991-04-01", color = "#e5e5e5") %>%
+  dyShading(from = "2001-01-01", to = "2001-10-01", color = "#e5e5e5") %>%
+  dyShading(from = "2007-10-01", to = "2009-07-01", color = "#e5e5e5") %>%
+  dyShading(from = "2020-01-01", to = "2020-07-01", color = "#e5e5e5") 
+)
+  } else {
+    return(c)
+  }
+}
+```
+
+```{r}
+ffr %>%
+  select(value) %>%
+  #rename_with("Federal Funds Rate", value)
+  xts(., order.by = as.Date(ffr$date)) %>% 
+dygraph() %>%
+  dyAxis("y", label = "Federal Funds Rate",
+         valueFormatter = "function(v){return (v) + '%'}",
+         axisLabelFormatter = "function(v){return (v) + '%'}"
+         ) %>%
+  dySeries(color = "red") %>%
+  dyOptions(strokeWidth = 3) %>%
+  dyRangeSelector()
+  
+```
+
+```{r}
+ffr %>%
+  select(value) %>%
+  rename_with("Federal Funds Rate", value) %>%
+  
+```
+
+```{r}
+dy_graph(ffr, "Federal Funds Rate", "percent", shade_recessions = TRUE)
+```
+
+```{r}
+dy_graph(oil, "Oil", "dollar", shade_recessions = T)
+```
+
+```{r}
+dy_graph(gas, "Gasoline", "dollar", shade_recessions = T)
+```
+
+```{r}
+recessions
+```
+
+```{r}
+recs_xts <- recs %>%
+  xts(., order.by = as.Date(recs$date))
+
+#ffr %>%
+#  select(value) %>%
+#  xts(., order.by = as.Date(ffr$date)) %>%
+#  dygraph() %>%
+#  dySeries
+```
+
+```{r}
+recs
+```
+
+```{r}
+ffr %>% 
+  select(value) %>%
+  rename("Fed Funds Rate" = value) %>% 
+  xts(., order.by = as.Date(ffr$date)) %>% 
+  dygraph() %>%
+  dyAxis("y", label = "Federal Funds Rate",
+         valueFormatter = "function(v){return (v) + '%'}",
+         axisLabelFormatter = "function(v){return (v) + '%'}"
+         ) %>%
+  dyShading(from = "1969-04-01", to = "1971-01-01", color = "#e5e5e5") %>%
+  dyShading(from = "1973-10-01", to = "1975-04-01", color = "#e5e5e5") %>%
+  dyShading(from = "1979-04-01", to = "1980-07-01", color = "#e5e5e5") %>%
+  dyShading(from = "1981-04-01", to = "1982-07-01", color = "#e5e5e5") %>%
+  dyShading(from = "1989-10-01", to = "1991-04-01", color = "#e5e5e5") %>%
+  dyShading(from = "2001-01-01", to = "2001-10-01", color = "#e5e5e5") %>%
+  dyShading(from = "2007-10-01", to = "2009-07-01", color = "#e5e5e5") %>%
+  dyShading(from = "2020-01-01", to = "2020-07-01", color = "#e5e5e5") %>%
+  dyOptions(strokeWidth = 3) %>%
+  dyRangeSelector()
+```
+
+## Hicharter
+
+```{r}
+path <- here::here("scripts")            # scripts source
+source_files <- list.files(path, "*.R$")  # locate all .R files
+map(paste0(path, "/", source_files), source)  # source all .R scripts
+ffr_latest <- paste0(get_latest_value(ffr),"%")
+ffr_latest_date <- get_latest_date(ffr)
+```
+
+```{r}
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+
+hchart(ffr,
+       "line",
+       hcaes(x = date, y = value),
+       name = "Federal Funds Rate",
+       lineWidth = 3,
+       color = "green"
+       ) %>% #, color = country)
+  #hd_add_series_time_values
+   hc_yAxis(
+    title = list(text = "Federal Funds Rate"),
+    labels = list(format = "{value}%"), 
+    max = 20
+  ) %>%
+  hc_xAxis(
+    title = list(text = "Date"),
+    type = "datetime",
+    plotBands = list(
+      list(
+        from = as.Date("1969-01-01"),
+        to = as.Date("1972-01-01"),
+        color = "#000000" #,
+        #label = list(text = "This is a plotBand"),
+        # the zIndex is used to put the label text over the grid lines 
+        #zIndex = 1
+        )
+      )
+    #categories = favorite_pies$pie
+    ) %>%
+# Titles, subtitle, caption and credits
+  hc_title(
+    text = "Federal Funds Rate"
+  ) %>%
+  hc_subtitle(
+    text = "This is a subtitle"
+  ) %>%
+  hc_caption(
+    text = glue::glue("As of {ffr_latest_date}")
+    ) %>%
+  hc_credits(
+    enabled = TRUE, text = "Source: FRED",
+    href = "https://fred.stlouisfed.org",
+    style = list(fontSize = "12px")
+  )
+```
+
+```{r}
+hchart(ffr,
+       "stock",
+       hcaes(x = date, y = value),
+       name = "Federal Funds Rate",
+       #lineWidth = 3,
+       #color = "green"
+       ) 
+```
+
+```{r, eval = F}
+plotly <- layout(plotly, title = 'Highlighting with Rectangles',
+
+             shapes = list(
+
+               list(type = "rect",
+
+                    fillcolor = "blue", line = list(color = "blue"), opacity = 0.3,
+
+                    x0 = "1980-01-01", x1 = "1985-01-01", xref = "x",
+
+                    y0 = 4, y1 = 12.5, yref = "y"),
+
+               list(type = "rect",
+
+                 fillcolor = "blue", line = list(color = "blue"), opacity = 0.2,
+
+                 x0 = "2000-01-01", x1 = "2005-01-01", xref = "x",
+
+                 y0 = 4, y1 = 12.5, yref = "y")))
+
+plotly
+```
+
+## ggiraph
+
+```{r}
+library(ggiraph)
+g <- ggplot(data = ffr)+
+    aes(x = date,
+        y = value,
+        color = series_id)+
+    geom_rect(data = recs, 
+              aes(xmin = start, xmax = end, ymin = -Inf, ymax = Inf),
+              inherit.aes = FALSE, fill = "black", alpha = 0.3)+
+    geom_path_interactive(
+      aes(tooltip = value),#sprintf("%s: %.0f", fill, after_stat(count))),
+      size = 1)+
+    geom_hline(yintercept=0, size=1)+
+    scale_x_date(limits = c(as.Date("1955-01-01"),
+                            as.Date(lubridate::mdy(get_latest_date(ffr)))),
+                 date_breaks = "5 years",
+                 #minor_breaks = "2 years",
+                 date_labels = "%Y",
+                 expand = c(0,0))+
+    scale_y_continuous(breaks = seq(0,20,2),
+                       labels = function(x){paste0(x,"%")},
+                       limits = c(0,20),
+                       expand = c(0,0))+
+    labs(x = "Year",
+         y = "Federal Funds Rate",
+         caption = bquote("Data Source: FRED; Recessions Shaded in Gray; Latest Release: " ~ .(get_latest_date(ffr))
+                 )
+         )+
+    theme_classic(base_family = "Fira Sans Condensed", base_size = 16)+
+    theme(legend.position="none")
+
+girafe(ggobj = g)
+
+
+```

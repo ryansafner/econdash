@@ -1,0 +1,512 @@
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"stock",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = as.Date("1969-01-01"),
+to = as.Date("1972-01-01"),
+color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+type = "stock",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+#type = "datetime",
+#plotBands = list(
+#  list(
+#    from = as.Date("1969-01-01"),
+#    to = as.Date("1972-01-01"),
+#    color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+#    )
+#  )
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+type = "stock",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date")#,
+#type = "datetime",
+#plotBands = list(
+#  list(
+#    from = as.Date("1969-01-01"),
+#    to = as.Date("1972-01-01"),
+#    color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+#    )
+#  )
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = as.Date("1969-01-01"),
+to = as.Date("1972-01-01"),
+color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+hchart(ffr,
+"stock",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+hchart(ffr,
+"stock",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+)
+hchart(ffr,
+"stock",
+#hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+#lineWidth = 3,
+#color = "green"
+)
+hchart(ffr,
+"stock",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+#lineWidth = 3,
+#color = "green"
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = as.Date("1969-01-01"),
+to = as.Date("1972-01-01"),
+color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = lubridate::ymd("1969-01-01"),
+to = lubridate::ymd("1972-01-01"),
+color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = ("1969-01-01"),
+to = ("1972-01-01"),
+color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = as.Date("1969-01-01"),
+to = as.Date("1972-01-01"),
+color = "#000000",
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = lubridate::("1969-01-01"),
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = lubridate::ymd("1969-01-01"),
+to = lubridate::ymd("1972-01-01"),
+color = "#000000",
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+library(highcharter)
+#hchart(ffr, "line", hcaes(x = date, y = value))
+hchart(ffr,
+"line",
+hcaes(x = date, y = value),
+name = "Federal Funds Rate",
+lineWidth = 3,
+color = "green"
+) %>% #, color = country)
+#hd_add_series_time_values
+hc_yAxis(
+title = list(text = "Federal Funds Rate"),
+labels = list(format = "{value}%"),
+max = 20
+) %>%
+hc_xAxis(
+title = list(text = "Date"),
+type = "datetime",
+plotBands = list(
+list(
+from = as.Date("1969-01-01"),
+to = as.Date("1972-01-01"),
+color = "#000000" #,
+#label = list(text = "This is a plotBand"),
+# the zIndex is used to put the label text over the grid lines
+#zIndex = 1
+)
+)
+#categories = favorite_pies$pie
+) %>%
+# Titles, subtitle, caption and credits
+hc_title(
+text = "Federal Funds Rate"
+) %>%
+hc_subtitle(
+text = "This is a subtitle"
+) %>%
+hc_caption(
+text = glue::glue("As of {ffr_latest_date}")
+) %>%
+hc_credits(
+enabled = TRUE, text = "Source: FRED",
+href = "https://fred.stlouisfed.org",
+style = list(fontSize = "12px")
+)
+install.packages("fredr")
