@@ -47,7 +47,7 @@ library(here)
 library(tidyverse)
 here::i_am("econ_dash.Rmd")
 
-path <- here::here("scripts")            # scripts source
+path <- here::here("R")            # scripts source
 source_files <- list.files(path, "*.R$")  # locate all .R files
 map(paste0(path, "/", source_files), source)  # source all .R scripts
 ```
