@@ -11,15 +11,15 @@ export default async (req) => {
 
   const url = new URL(req.url);
 
-  const fredPath = url.searchParams.get("path") || "";
-  url.searchParams.delete("path");
+  // Extract the FRED subpath: /fred/series/observations -> series/observations
+  const fredSubpath = url.pathname.replace(/^\/fred\//, "");
 
-  // Strip any client-supplied api_key — we inject it server-side
-  url.searchParams.delete("api_key");
+  // Forward all query params from the original request, inject api_key server-side
+  const params = new URLSearchParams(url.search);
+  params.delete("api_key");
+  params.set("api_key", apiKey);
 
-  const remaining = url.searchParams.toString();
-  const sep = remaining ? "&" : "";
-  const fredUrl = `${FRED_BASE}/${fredPath}?api_key=${apiKey}&${remaining}`;
+  const fredUrl = `${FRED_BASE}/${fredSubpath}?${params.toString()}`;
 
   try {
     const resp = await fetch(fredUrl, {
@@ -48,5 +48,5 @@ export default async (req) => {
 };
 
 export const config = {
-  path: "/.netlify/functions/fred-proxy",
+  path: "/fred/*",
 };

@@ -4,10 +4,3 @@
 
 [functions]
   node_bundler = "esbuild"
-
-# Proxy /fred/* to the serverless function so the frontend code stays unchanged
-[[redirects]]
-  from = "/fred/*"
-  to = "/.netlify/functions/fred-proxy?path=:splat"
-  status = 200
-  force = true
