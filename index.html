@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>U.S. Economic Dashboard</title>
+  <link rel="stylesheet" href="css/styles.css">
+  <script src="https://cdn.plot.ly/plotly-2.35.0.min.js"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <!-- Header -->
+  <header>
+    <div class="header-left">
+      <h1>U.S. Economic Dashboard</h1>
+      <span class="last-refresh" id="last-refresh"></span>
+    </div>
+    <div class="header-right">
+      <button id="refresh-btn" class="btn-icon" title="Refresh data">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6"/><path d="M3.51 9a9 9 0 0114.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0020.49 15"/></svg>
+      </button>
+      <button id="theme-toggle" class="btn-icon" title="Toggle theme">
+        <svg id="theme-icon-light" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+        <svg id="theme-icon-dark" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="display:none"><path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/></svg>
+      </button>
+    </div>
+  </header>
+
+  <!-- Navigation -->
+  <nav id="main-nav">
+    <button class="nav-btn active" data-tab="highlights">Overview</button>
+    <button class="nav-btn" data-tab="gdp">GDP & Growth</button>
+    <button class="nav-btn" data-tab="labor">Labor Markets</button>
+    <button class="nav-btn" data-tab="prices">Prices & Inflation</button>
+    <button class="nav-btn" data-tab="housing">Housing</button>
+    <button class="nav-btn" data-tab="consumer">Consumer</button>
+    <button class="nav-btn" data-tab="yieldcurve">Yield Curve</button>
+    <button class="nav-btn" data-tab="money">Money & Credit</button>
+    <button class="nav-btn" data-tab="budget">Budget & Debt</button>
+    <button class="nav-btn" data-tab="trade">Trade</button>
+    <button class="nav-btn" data-tab="calendar">Release Calendar</button>
+  </nav>
+
+  <!-- Main Content -->
+  <main id="main-content">
+    <!-- Highlights / Overview Tab -->
+    <section id="tab-highlights" class="tab-content active">
+      <div class="section-header">
+        <h2>Economic Overview</h2>
+        <p class="section-subtitle">Key indicators at a glance</p>
+      </div>
+      <div class="kpi-grid" id="overview-kpis"></div>
+      <div class="overview-panels">
+        <div class="panel" id="yield-curve-status-panel">
+          <h3>Yield Curve Status</h3>
+          <div id="yield-curve-status"></div>
+        </div>
+        <div class="panel" id="overview-mini-chart-panel">
+          <h3>S&P 500 — 1 Year</h3>
+          <div id="overview-mini-chart"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- GDP & Growth Tab -->
+    <section id="tab-gdp" class="tab-content">
+      <div class="section-header">
+        <h2>GDP & Growth</h2>
+        <p class="section-subtitle">Output, production, and leading indicators</p>
+      </div>
+      <div class="kpi-grid" id="gdp-kpis"></div>
+      <div class="charts-grid" id="gdp-charts"></div>
+    </section>
+
+    <!-- Labor Markets Tab -->
+    <section id="tab-labor" class="tab-content">
+      <div class="section-header">
+        <h2>Labor Markets</h2>
+        <p class="section-subtitle">Employment, wages, and labor dynamics</p>
+      </div>
+      <div class="kpi-grid" id="labor-kpis"></div>
+      <div class="charts-grid" id="labor-charts"></div>
+    </section>
+
+    <!-- Prices & Inflation Tab -->
+    <section id="tab-prices" class="tab-content">
+      <div class="section-header">
+        <h2>Prices & Inflation</h2>
+        <p class="section-subtitle">Consumer prices, commodities, and financial markets</p>
+      </div>
+      <div class="kpi-grid" id="prices-kpis"></div>
+      <div class="charts-grid" id="prices-charts"></div>
+    </section>
+
+    <!-- Housing Tab -->
+    <section id="tab-housing" class="tab-content">
+      <div class="section-header">
+        <h2>Housing</h2>
+        <p class="section-subtitle">Home prices, construction, and affordability</p>
+      </div>
+      <div class="kpi-grid" id="housing-kpis"></div>
+      <div class="charts-grid" id="housing-charts"></div>
+    </section>
+
+    <!-- Consumer & Sentiment Tab -->
+    <section id="tab-consumer" class="tab-content">
+      <div class="section-header">
+        <h2>Consumer & Sentiment</h2>
+        <p class="section-subtitle">Confidence, spending, and savings</p>
+      </div>
+      <div class="kpi-grid" id="consumer-kpis"></div>
+      <div class="charts-grid" id="consumer-charts"></div>
+    </section>
+
+    <!-- Yield Curve Tab -->
+    <section id="tab-yieldcurve" class="tab-content">
+      <div class="section-header">
+        <h2>Yield Curve</h2>
+        <p class="section-subtitle">Treasury yields across maturities</p>
+      </div>
+      <div class="yield-curve-container">
+        <div class="panel" id="yield-curve-today-panel">
+          <div class="panel-header">
+            <h3>Current Yield Curve</h3>
+            <div id="yield-curve-date"></div>
+          </div>
+          <div id="yield-curve-chart"></div>
+          <div id="yield-curve-table-container"></div>
+        </div>
+        <div class="panel" id="yield-spread-panel">
+          <h3>10-Year minus 2-Year Spread (Historical)</h3>
+          <div id="yield-spread-chart"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Money & Credit Tab -->
+    <section id="tab-money" class="tab-content">
+      <div class="section-header">
+        <h2>Money & Credit</h2>
+        <p class="section-subtitle">Money supply, interest rates, and lending</p>
+      </div>
+      <div class="kpi-grid" id="money-kpis"></div>
+      <div class="charts-grid" id="money-charts"></div>
+    </section>
+
+    <!-- Budget & Debt Tab -->
+    <section id="tab-budget" class="tab-content">
+      <div class="section-header">
+        <h2>Federal Budget & Debt</h2>
+        <p class="section-subtitle">Fiscal balance, public debt, and debt sustainability</p>
+      </div>
+      <div class="kpi-grid" id="budget-kpis"></div>
+      <div class="charts-grid" id="budget-charts"></div>
+    </section>
+
+    <!-- Trade Tab -->
+    <section id="tab-trade" class="tab-content">
+      <div class="section-header">
+        <h2>International Trade</h2>
+        <p class="section-subtitle">Imports, exports, and trade balance</p>
+      </div>
+      <div class="kpi-grid" id="trade-kpis"></div>
+      <div class="charts-grid" id="trade-charts"></div>
+    </section>
+
+    <!-- Release Calendar Tab -->
+    <section id="tab-calendar" class="tab-content">
+      <div class="section-header">
+        <h2>Upcoming Data Releases</h2>
+        <p class="section-subtitle">Major economic data release schedule</p>
+      </div>
+      <div id="calendar-content"></div>
+    </section>
+  </main>
+
+  <!-- Loading overlay -->
+  <div id="loading-overlay" class="loading-overlay" style="display:none">
+    <div class="spinner"></div>
+    <p>Loading economic data...</p>
+  </div>
+
+  <footer>
+    <p>Data from <a href="https://fred.stlouisfed.org" target="_blank">FRED</a> (Federal Reserve Bank of St. Louis) and public APIs. Not investment advice.</p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/api.js"></script>
+  <script src="js/charts.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
