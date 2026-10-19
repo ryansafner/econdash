@@ -3,10 +3,12 @@
 const App = {
   currentTab: 'highlights',
   loadedTabs: new Set(),
+  _recessionBands: null,
 
   init() {
     this.initTheme();
     this.bindEvents();
+    this.initHashRouting();
     this.loadCurrentTab();
   },
 
@@ -54,6 +56,7 @@ const App = {
     document.getElementById('theme-toggle').addEventListener('click', () => this.toggleTheme());
     document.getElementById('refresh-btn').addEventListener('click', () => {
       API.cache.clear();
+      this._recessionBands = null;
       this.loadedTabs.clear();
       this.loadCurrentTab();
     });
@@ -63,10 +66,25 @@ const App = {
     });
   },
 
+  initHashRouting() {
+    const hash = location.hash.slice(1);
+    const validTabs = ['highlights', 'gdp', 'labor', 'prices', 'housing', 'consumer', 'yieldcurve', 'money', 'budget', 'trade', 'calendar'];
+    if (hash && validTabs.includes(hash)) {
+      this.currentTab = hash;
+      document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === hash));
+      document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === `tab-${hash}`));
+    }
+    window.addEventListener('hashchange', () => {
+      const h = location.hash.slice(1);
+      if (h && h !== this.currentTab) this.switchTab(h);
+    });
+  },
+
   switchTab(tab) {
     this.currentTab = tab;
     document.querySelectorAll('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
     document.querySelectorAll('.tab-content').forEach(s => s.classList.toggle('active', s.id === `tab-${tab}`));
+    history.replaceState(null, '', `#${tab}`);
     this.loadCurrentTab();
   },
 
@@ -100,35 +118,77 @@ const App = {
     el.textContent = 'Refreshed ' + new Date().toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
   },
 
+  // ===== Recession Bands (USREC) =====
+  async getRecessionBands() {
+    if (this._recessionBands) return this._recessionBands;
+    try {
+      const data = await API.getSeriesObservations('USREC', { sort_order: 'asc' });
+      const bands = [];
+      let start = null;
+      for (const obs of data) {
+        if (obs.value === 1 && !start) start = obs.date;
+        if (obs.value === 0 && start) {
+          bands.push({ start, end: obs.date });
+          start = null;
+        }
+      }
+      if (start) bands.push({ start, end: data[data.length - 1].date });
+      this._recessionBands = bands;
+      return bands;
+    } catch {
+      return [];
+    }
+  },
+
+  // ===== Next Release Dates =====
+  async fetchReleaseDates(fredIds) {
+    const result = {};
+    const releaseIds = new Set();
+    const idToRelease = {};
+    for (const fid of fredIds) {
+      const rid = SERIES_RELEASE_MAP[fid];
+      if (rid) {
+        releaseIds.add(rid);
+        idToRelease[fid] = rid;
+      }
+    }
+    const releaseDateCache = {};
+    await Promise.all([...releaseIds].map(async rid => {
+      const dates = await API.getReleaseDates(rid, 1);
+      releaseDateCache[rid] = dates[0] || null;
+    }));
+    for (const fid of fredIds) {
+      const rid = idToRelease[fid];
+      result[fid] = rid ? releaseDateCache[rid] : null;
+    }
+    return result;
+  },
+
   // ===== Overview Tab =====
   async loadOverview() {
     const kpiContainer = document.getElementById('overview-kpis');
     const overviewKeys = SERIES.overview;
-
-    // Resolve overview keys to configs
     const resolved = this.resolveOverviewSeries(overviewKeys);
 
-    // Show skeletons
     kpiContainer.innerHTML = resolved.map(({ config }) => Charts.buildSkeletonCard(config)).join('');
 
-    // Fetch all data
     const fredIds = resolved.map(r => r.config.fredId);
 
     try {
-      const allData = await API.getMultipleLatest(fredIds);
+      const [allData, releaseDates] = await Promise.all([
+        API.getMultipleLatest(fredIds),
+        this.fetchReleaseDates(fredIds)
+      ]);
 
-      // Render KPIs
       kpiContainer.innerHTML = resolved.map(({ key, config }) => {
-        return Charts.buildKpiCard(key, config, allData[config.fredId] || []);
+        const obs = allData[config.fredId] || [];
+        return Charts.buildKpiCard(key, config, obs, { nextRelease: releaseDates[config.fredId] });
       }).join('');
     } catch (e) {
       kpiContainer.innerHTML = `<div class="error-msg">Failed to load data: ${e.message}. Check your API key and network connection.</div>`;
     }
 
-    // Yield curve status
     await this.loadYieldCurveStatus();
-
-    // Mini SP500 chart
     await this.loadMiniChart();
   },
 
@@ -189,9 +249,12 @@ const App = {
 
   async loadMiniChart() {
     try {
-      const data = await API.getChartData('SP500', 1);
+      const [data, recessionBands] = await Promise.all([
+        API.getChartData('SP500', 1),
+        this.getRecessionBands()
+      ]);
       Charts.renderTimeSeriesChart('overview-mini-chart', data, 'S&P 500', {
-        height: 200, fill: true, color: '#4361ee'
+        height: 200, fill: true, color: '#4361ee', recessionBands
       });
     } catch (e) {
       document.getElementById('overview-mini-chart').innerHTML =
@@ -208,20 +271,22 @@ const App = {
     const chartsContainer = document.getElementById(`${catKey}-charts`);
     const seriesEntries = Object.entries(catDef.series);
 
-    // Show skeletons
     kpiContainer.innerHTML = seriesEntries.map(([, cfg]) => Charts.buildSkeletonCard(cfg)).join('');
     chartsContainer.innerHTML = '';
 
-    // Fetch all latest values
     const fredIds = seriesEntries.map(([, cfg]) => cfg.fredId);
-    const allData = await API.getMultipleLatest(fredIds);
 
-    // Render KPIs
+    const [allData, recessionBands, releaseDates] = await Promise.all([
+      API.getMultipleLatest(fredIds),
+      this.getRecessionBands(),
+      this.fetchReleaseDates(fredIds)
+    ]);
+
     kpiContainer.innerHTML = seriesEntries.map(([key, cfg]) => {
-      return Charts.buildKpiCard(key, cfg, allData[cfg.fredId] || []);
+      const obs = allData[cfg.fredId] || [];
+      return Charts.buildKpiCard(key, cfg, obs, { nextRelease: releaseDates[cfg.fredId] });
     }).join('');
 
-    // Render charts (load in parallel, render sequentially)
     const chartPromises = seriesEntries.map(async ([key, cfg]) => {
       const chartId = `chart-${catKey}-${key}`;
       const wrapper = Charts.createChartContainer(`${catKey}-charts`, chartId, cfg.name, cfg.unit);
@@ -231,7 +296,8 @@ const App = {
       const chartConfig = {
         color: cfg.invert ? '#ef4444' : '#4361ee',
         fill: true,
-        zeroline: cfg.format === 'dollar' && cfg.changeType === 'diff'
+        zeroline: cfg.format === 'dollar' && cfg.changeType === 'diff',
+        recessionBands
       };
       wrapper._chartConfig = chartConfig;
 
@@ -245,6 +311,41 @@ const App = {
     });
 
     await Promise.all(chartPromises);
+
+    // YoY % change charts for inflation-type series
+    const yoySeries = seriesEntries.filter(([, cfg]) => cfg.yoyDisplay);
+    if (yoySeries.length > 0) {
+      const header = document.createElement('div');
+      header.className = 'yoy-section-header';
+      header.innerHTML = '<h3>Year-over-Year % Change</h3>';
+      chartsContainer.appendChild(header);
+
+      await Promise.all(yoySeries.map(async ([key, cfg]) => {
+        const chartId = `chart-${catKey}-${key}-yoy`;
+        const wrapper = Charts.createChartContainer(`${catKey}-charts`, chartId, `${cfg.name} — YoY % Change`, '%');
+        if (!wrapper) return;
+
+        wrapper.dataset.fredId = cfg.fredId;
+        wrapper._isYoY = true;
+        const chartConfig = {
+          color: '#f59e0b',
+          fill: true,
+          fillColor: 'rgba(245, 158, 11, 0.08)',
+          zeroline: true,
+          recessionBands,
+          tickformat: '.1f'
+        };
+        wrapper._chartConfig = chartConfig;
+
+        try {
+          const data = await API.getChartData(cfg.fredId, 5, { units: 'pc1' });
+          Charts.renderTimeSeriesChart(chartId, data, `${cfg.name} — YoY % Change`, chartConfig);
+        } catch (e) {
+          document.getElementById(chartId).innerHTML =
+            `<p style="color:var(--text-muted);padding:1rem">Could not load YoY data</p>`;
+        }
+      }));
+    }
   },
 
   // ===== Yield Curve Tab =====
@@ -283,18 +384,18 @@ const App = {
 
   async loadYieldSpread() {
     try {
-      const [data10, data2] = await Promise.all([
+      const [data10, data2, recessionBands] = await Promise.all([
         API.getChartData('DGS10', 5),
-        API.getChartData('DGS2', 5)
+        API.getChartData('DGS2', 5),
+        this.getRecessionBands()
       ]);
 
-      // Align dates and compute spread
       const map2 = new Map(data2.map(d => [d.date, d.value]));
       const spreadData = data10
         .filter(d => map2.has(d.date))
         .map(d => ({ date: d.date, value: d.value - map2.get(d.date) }));
 
-      Charts.renderYieldSpreadChart('yield-spread-chart', spreadData);
+      Charts.renderYieldSpreadChart('yield-spread-chart', spreadData, recessionBands);
     } catch (e) {
       document.getElementById('yield-spread-chart').innerHTML =
         '<p style="color:var(--text-muted);padding:1rem">Could not load spread data</p>';

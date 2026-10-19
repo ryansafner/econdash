@@ -53,8 +53,8 @@ const Charts = {
     return positive ? 'positive' : 'negative';
   },
 
-  // Build a KPI card HTML
-  buildKpiCard(key, config, observations) {
+  // Build a KPI card HTML (with sparkline and optional next release date)
+  buildKpiCard(key, config, observations, extras = {}) {
     const latest = observations?.[0];
     const change = this.calcChange(observations, config);
     const direction = this.changeDirection(change, config);
@@ -66,17 +66,41 @@ const Charts = {
       ? `<div class="kpi-change ${direction}">${arrow} ${change.display}</div>`
       : '';
 
+    const sparklineHtml = this.buildSparkline(observations, direction);
+    const nextReleaseHtml = extras.nextRelease
+      ? `<div class="kpi-next-release">Next release: ${this.formatDate(extras.nextRelease)}</div>`
+      : '';
+
     return `
       <div class="kpi-card" data-series="${key}">
         <div class="kpi-label">${config.name}</div>
         <div class="kpi-value">${valueText}</div>
         ${changeHtml}
+        ${sparklineHtml}
         <div class="kpi-meta">
           ${dateText ? `Updated: ${dateText}` : ''}
           ${config.unit ? ` &middot; ${config.unit}` : ''}
         </div>
+        ${nextReleaseHtml}
       </div>
     `;
+  },
+
+  // Build a tiny sparkline SVG from recent observations
+  buildSparkline(observations, direction = 'neutral') {
+    if (!observations || observations.length < 3) return '';
+    const vals = observations.slice(0, 12).map(o => o.value).reverse();
+    const min = Math.min(...vals);
+    const max = Math.max(...vals);
+    const range = max - min || 1;
+    const w = 80, h = 24;
+    const points = vals.map((v, i) => {
+      const x = (i / (vals.length - 1)) * w;
+      const y = h - 2 - ((v - min) / range) * (h - 4);
+      return `${x.toFixed(1)},${y.toFixed(1)}`;
+    }).join(' ');
+    const colorVar = direction === 'positive' ? 'var(--positive)' : direction === 'negative' ? 'var(--negative)' : 'var(--text-muted)';
+    return `<div class="kpi-sparkline"><svg viewBox="0 0 ${w} ${h}" preserveAspectRatio="none"><polyline points="${points}" fill="none" stroke="${colorVar}" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>`;
   },
 
   // Build skeleton KPI card
@@ -135,6 +159,21 @@ const Charts = {
       }] : []
     };
 
+    // Recession shading
+    if (config.recessionBands && config.recessionBands.length > 0) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const chartStart = dates[0], chartEnd = dates[dates.length - 1];
+      for (const band of config.recessionBands) {
+        if (band.end < chartStart || band.start > chartEnd) continue;
+        layout.shapes.push({
+          type: 'rect', xref: 'x', yref: 'paper',
+          x0: band.start, x1: band.end, y0: 0, y1: 1,
+          fillcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+          line: { width: 0 }, layer: 'below'
+        });
+      }
+    }
+
     Plotly.newPlot(container, [trace], layout, getPlotlyConfig());
   },
 
@@ -169,7 +208,8 @@ const Charts = {
         const fredId = div.dataset.fredId;
         if (fredId) {
           const years = range === 'max' ? 'max' : parseInt(range);
-          const data = await API.getChartData(fredId, years);
+          const extraParams = div._isYoY ? { units: 'pc1' } : {};
+          const data = await API.getChartData(fredId, years, extraParams);
           Charts.renderTimeSeriesChart(chartId, data, title, div._chartConfig || {});
         }
       });
@@ -226,7 +266,7 @@ const Charts = {
   },
 
   // Render yield spread (10Y - 2Y) time series
-  renderYieldSpreadChart(containerId, data) {
+  renderYieldSpreadChart(containerId, data, recessionBands = []) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
@@ -266,6 +306,20 @@ const Charts = {
         line: { color: '#ef4444', width: 1.5, dash: 'dash' }
       }]
     };
+
+    if (recessionBands && recessionBands.length > 0) {
+      const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+      const chartStart = dates[0], chartEnd = dates[dates.length - 1];
+      for (const band of recessionBands) {
+        if (band.end < chartStart || band.start > chartEnd) continue;
+        layout.shapes.push({
+          type: 'rect', xref: 'x', yref: 'paper',
+          x0: band.start, x1: band.end, y0: 0, y1: 1,
+          fillcolor: isDark ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)',
+          line: { width: 0 }, layer: 'below'
+        });
+      }
+    }
 
     Plotly.newPlot(container, [trace], layout, getPlotlyConfig());
   },

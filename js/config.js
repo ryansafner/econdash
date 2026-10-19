@@ -337,6 +337,32 @@ const RELEASE_CALENDAR = [
   { name: 'Beige Book', source: 'Federal Reserve', fredReleaseId: 22, time: '2:00 PM ET', frequency: '~8x/year' },
 ];
 
+// Map FRED series IDs to their release IDs (for next-release-date lookups)
+const SERIES_RELEASE_MAP = {
+  'GDP': 53, 'A191RL1Q225SBEA': 53,
+  'INDPRO': 14, 'TCU': 14,
+  'DSPIC96': 54,
+  'UNRATE': 50, 'PAYEMS': 50, 'CIVPART': 50, 'CES0500000003': 50,
+  'JTSJOL': 132, 'JTSQUR': 132,
+  'ICSA': 31, 'CCSA': 31,
+  'CPIAUCSL': 10, 'CPILFESL': 10,
+  'PCEPI': 54, 'PCEPILFE': 54,
+  'PPIACO': 46,
+  'CSUSHPINSA': 199,
+  'HOUST': 12,
+  'EXHOSLUSM495S': 91,
+  'HSN1F': 13, 'MSPUS': 13,
+  'UMCSENT': 72,
+  'PSAVERT': 54, 'PCEC96': 54,
+  'RSAFS': 11,
+  'TOTALSL': 108,
+  'MTSDS133FMS': 17, 'GFDEBTN': 17,
+  'GFDEGDQ188S': 53, 'W006RC1Q027SBEA': 53, 'W019RCQ027SBEA': 53, 'A091RC1Q027SBEA': 53,
+  'BOPGSTB': 15, 'BOPTEXP': 15, 'BOPTIMP': 15,
+  'NETEXP': 53, 'NETFI': 53,
+  'M2SL': 20,
+};
+
 // Plotly theme config
 function getPlotlyTheme() {
   const isDark = document.documentElement.getAttribute('data-theme') === 'dark';

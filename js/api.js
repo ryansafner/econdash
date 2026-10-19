@@ -116,13 +116,15 @@ const API = {
     return results;
   },
 
-  async getChartData(seriesId, years = 5) {
+  async getChartData(seriesId, years = 5, extraParams = {}) {
     let startDate = null;
     if (years !== 'max') {
       const d = new Date();
       d.setFullYear(d.getFullYear() - years);
       startDate = d.toISOString().slice(0, 10);
     }
-    return this.getHistory(seriesId, startDate);
+    const params = { sort_order: 'asc', ...extraParams };
+    if (startDate) params.observation_start = startDate;
+    return this.getSeriesObservations(seriesId, params);
   }
 };
